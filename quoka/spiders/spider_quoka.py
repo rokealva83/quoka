@@ -27,8 +27,7 @@ class QuokaSpyder(CrawlSpider):
         hrefs = response.css('.item').xpath('@href').extract()
 
         for href in hrefs:
-            url = href
-            yield FormRequest(self._url(url), callback=self.parse_object)
+            yield FormRequest(self._url(href), callback=self.parse_object)
 
     def parse_object(self, response):
         element = {}
@@ -54,19 +53,20 @@ class QuokaSpyder(CrawlSpider):
 
         Boersen_ID = '21'
         OBID = response.css('.date-and-clicks strong').xpath('text()').extract()
-        OBID = OBID[0]
-        OBID = OBID[1:]
-        OBID = string.rstrip(OBID).encode('utf-8')
+        OBID = string.rstrip(OBID[0][1:]).encode('utf-8')
         erzeught_am = date.today().strftime('%d.%m.%Y')
         Anbienter_ID = ""
-        Stadt = response.css('.locality').xpath('text()').extract_first().encode('utf-8')
-        PLZ = response.css('.postal-code').xpath('text()').extract_first().encode('utf-8')
-        Uberschrift = response.css('.headline h2').xpath('text()').extract_first().encode('utf-8')
-        Beschreibung = response.css('.text').xpath('text()').extract_first().encode('utf-8')
+        def extract_element(selector):
+            return response.css(selector).xpath('text()').extract_first().encode('utf-8')
+
+        Stadt = extract_element('.locality')
+        PLZ = extract_element('.postal-code')
+        Uberschrift = extract_element('.headline h2')
+        Beschreibung = extract_element('.text')
         try:
-            Kaufpreis = response.css('.price span').xpath('text()').extract_first().encode('utf-8')
+            Kaufpreis = extract_element('.price span')
         except:
-            Kaufpreis = response.css('.price strong').xpath('text()').extract_first().encode('utf-8')
+            Kaufpreis = extract_element('.price strong')
         Monat = date.today().strftime('%m')
         url = response.url
         try:
@@ -87,26 +87,27 @@ class QuokaSpyder(CrawlSpider):
         Gewerblich = ""
         Kleinanzeigen_App = ""
 
-        element.update({'Boersen_ID': Boersen_ID})
-        element.update({'OBID': OBID})
-        element.update({'erzeught_am': erzeught_am})
-        element.update({'Anbienter_ID': Anbienter_ID})
-        element.update({'Stadt': Stadt})
-        element.update({'PLZ': PLZ})
-        element.update({'Uberschrift': Uberschrift})
-        element.update({'Beschreibung': Beschreibung})
-        element.update({'Kaufpreis': Kaufpreis})
-        element.update({'Monat': Monat})
-        element.update({'url': url})
-        element.update({'Telefon': Telefon})
-        element.update({'Erstellungsdatum': Erstellungsdatum})
-        element.update({'Kleinanzeigen_App': Kleinanzeigen_App})
-        element.update({'Gewerblich': Gewerblich})
+        element.update({'Boersen_ID': Boersen_ID,
+                        'OBID': OBID,
+                        'erzeught_am': erzeught_am,
+                        'Anbienter_ID': Anbienter_ID,
+                        'Stadt': Stadt,
+                        'PLZ': PLZ,
+                        'Uberschrift': Uberschrift,
+                        'Beschreibung': Beschreibung,
+                        'Kaufpreis': Kaufpreis,
+                        'Monat': Monat,
+                        'url': url,
+                        'Telefon': Telefon,
+                        'Erstellungsdatum': Erstellungsdatum,
+                        'Kleinanzeigen_App': Kleinanzeigen_App,
+                        'Gewerblich': Gewerblich,
+})
 
-        file = open("/home/tadej/test.csv", 'a')
-        names = ['Boersen_ID', 'OBID', 'erzeught_am', 'Anbienter_ID', 'Stadt', 'PLZ', 'Uberschrift', 'Beschreibung',
-                 'Kaufpreis', 'Monat', 'url', 'Telefon', 'Erstellungsdatum', 'Gewerblich', 'Kleinanzeigen_App']
-
-        writer = csv.DictWriter(file, fieldnames=names)
-        writer.writerow(element)
+        with open("/home/tadej/test.csv", 'a') as f:
+            names = ['Boersen_ID', 'OBID', 'erzeught_am', 'Anbienter_ID', 'Stadt', 'PLZ', 'Uberschrift', 'Beschreibung',
+                     'Kaufpreis', 'Monat', 'url', 'Telefon', 'Erstellungsdatum', 'Gewerblich', 'Kleinanzeigen_App']
+    
+            writer = csv.DictWriter(f, fieldnames=names)
+            writer.writerow(element)
 
