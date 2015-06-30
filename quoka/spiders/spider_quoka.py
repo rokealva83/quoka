@@ -2,8 +2,6 @@
 
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
-from scrapy.selector import HtmlXPathSelector
-from quoka.items import QuokaItem
 from scrapy.http import FormRequest
 from datetime import date, timedelta
 import string, csv
@@ -33,9 +31,6 @@ class QuokaSpyder(CrawlSpider):
             yield FormRequest(self._url(url), callback=self.parse_object)
 
     def parse_object(self, response):
-        resp = response.body
-        hxs = HtmlXPathSelector(response)
-        item = QuokaItem()
         element = {}
         try:
             java = response.css('#dspphone1::attr(onclick)').extract()
