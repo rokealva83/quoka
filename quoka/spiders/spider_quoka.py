@@ -2,10 +2,10 @@
 
 from scrapy.spiders import CrawlSpider, Rule
 from scrapy.linkextractors import LinkExtractor
-from scrapy.http import FormRequest
+from scrapy.http import FormRequest, Request
 from datetime import date, timedelta
 import string, csv
-import urllib2
+import urllib, urllib2
 
 
 class QuokaSpyder(CrawlSpider):
@@ -15,13 +15,19 @@ class QuokaSpyder(CrawlSpider):
     start_urls = ["http://www.quoka.de/immobilien/bueros-gewerbeflaechen/"]
 
     rules = (
-        Rule(LinkExtractor(allow=('/bueros-gewerbeflaechen/')), follow=True, callback='parse_start_url'),
-        Rule(LinkExtractor(allow=(r'/bueros-gewerbeflaechen/+')), callback='parse_object'),
+        Rule(LinkExtractor(allow=('/bueros-gewerbeflaechen/')), follow=True, callback='start_parse'),
+        # Rule(LinkExtractor(allow=('/bueros-gewerbeflaechen/')), follow=True, callback='parse_start_url'),
+        # Rule(LinkExtractor(allow=(r'/bueros-gewerbeflaechen/+')), callback='parse_object'),
         Rule(LinkExtractor(allow=('/ajax/')), callback='parse_telefon'),
     )
 
     def _url(self, url):
         return 'http://www.quoka.de' + url
+
+    def start_parse(self):
+        payload = {"comm": '1', "classtype": 'wa'}
+        yield Request('http://www.quoka.de/immobilien/bueros-gewerbeflaechen/', self.parse_start_url, method="POST",
+                      body=urllib.urlencode(payload))
 
     def parse_start_url(self, response):
         hrefs = response.css('.item').xpath('@href').extract()
@@ -74,7 +80,7 @@ class QuokaSpyder(CrawlSpider):
             if Erstellungsdatum is not None:
                 Erstellungsdatum = date.today().strftime('%d.%m.%Y')
             else:
-                s = 1/0
+                s = 1 / 0
         except:
             datum = response.css('.date-and-clicks').xpath('text()').extract()
             Erstellungsdatum = datum[len(datum) - 2]
@@ -109,4 +115,3 @@ class QuokaSpyder(CrawlSpider):
 
         writer = csv.DictWriter(file, fieldnames=names)
         writer.writerow(element)
-
